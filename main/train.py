@@ -2,25 +2,31 @@ from transformers import RobertaForSequenceClassification, RobertaConfig, AdamW
 from dataloader import *
 from tqdm import tqdm
 from sklearn.metrics import f1_score, accuracy_score
+import os
+import torch
+import numpy as np 
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1" 
 
 
 def flat_accuracy(preds, labels):
     pred_flat = np.argmax(preds, axis=1).flatten()
     labels_flat = labels.flatten()
-    return np.sum(pred_flat == labels_flat) / len(labels_flat)
+    
+    F1_score = f1_score(pred_flat, labels_flat, average='macro')
+    
+    return accuracy_score(pred_flat, labels_flat), F1_score
 
 
 config = RobertaConfig.from_pretrained(
-    "transformers/PhoBERT_base_transformers/config.json", from_tf=False, num_labels = 5, output_hidden_states=False,
+    "transformers/PhoBERT_base_transformers/config.json", from_tf=False, num_labels = 6, output_hidden_states=False,
 )
 BERT_SA = RobertaForSequenceClassification.from_pretrained(
     "transformers/PhoBERT_base_transformers/model.bin",
     config=config
 )
 
-BERT_SA.cpu()
-device = 'cpu'
-
+BERT_SA.cuda()
+device = 'cuda'
 epochs = 10
 
 param_optimizer = list(BERT_SA.named_parameters())
@@ -47,7 +53,6 @@ for epoch_i in range(0, epochs):
         b_input_ids = batch[0].to(device)
         b_input_mask = batch[1].to(device)
         b_labels = batch[2].to(device)
-
         BERT_SA.zero_grad()
         outputs = BERT_SA(b_input_ids, 
             token_type_ids=None, 
@@ -58,11 +63,11 @@ for epoch_i in range(0, epochs):
         
         logits = outputs[1].detach().cpu().numpy()
         label_ids = b_labels.to('cpu').numpy()
+        label_ids = np.int64(label_ids)
         tmp_train_accuracy, tmp_train_f1 = flat_accuracy(logits, label_ids)
         train_accuracy += tmp_train_accuracy
         train_f1 += tmp_train_f1
         nb_train_steps += 1
-        
         loss.backward()
         torch.nn.utils.clip_grad_norm_(BERT_SA.parameters(), 1.0)
         optimizer.step()
