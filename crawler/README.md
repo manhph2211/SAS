@@ -6,7 +6,7 @@ Crawling Now.vn :sleepy:
 - Following these steps:
 
 ```
-cd cr
+cd crawler
 python3 utils.py # getting item links of each category and save in item_links.json
 mkdir _data
 python3 crawler.py -p 2 # crawling comments and stars with number of processes as a option
