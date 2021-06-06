@@ -1,7 +1,2 @@
-Positive-FeedBack with Torch
+Sentiment Analysis - T
 =====
-
-# 0. Introduction
-
-# 1. Data
-
