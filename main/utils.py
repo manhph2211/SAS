@@ -23,23 +23,6 @@ def split_data(paths,targets):
 	return X_train,y_train,X_val,y_val,X_test,y_test
 
 
-def get_data(data_path = "../crawler/total.csv"):
-	df = pd.read_csv(data_path)
-	# df = df[['text','star']]
-	# data = df.values.tolist()
-	texts = df['text'].tolist()
-	encode_text = []
-	for text in texts:
-		text = bpe.encode(' '.join(rdrsegmenter.tokenize(text)[0]))
-		encode_ = vocab.encode_line('<s> ' + text + ' </s>',append_eos=True, add_if_not_exist=False).long().tolist()
-		encode_text.append(encode_)
-	stars= df['star'].tolist()
-	encode_text = pad_sequences(encode_text, maxlen=MAX_LEN, dtype="long", value=0, truncating="post", padding="post")
-
-	X_train,y_train,X_val,y_val,X_test,y_test = split_data(encode_text,stars)
-	return X_train,y_train,X_val,y_val,X_test,y_test
-
-
 MAX_LEN = 125
 
 rdrsegmenter = VnCoreNLP("transformers/vncorenlp/VnCoreNLP-1.1.1.jar", annotators="wseg", max_heap_size='-Xmx500m') 
@@ -56,6 +39,22 @@ bpe = fastBPE(args)
 # Load the dictionary
 vocab = Dictionary()
 vocab.add_from_file("transformers/PhoBERT_base_transformers/dict.txt")
+
+
+def get_data(data_path = "../crawler/total.csv"):
+	df = pd.read_csv(data_path)
+	# df = df[['text','star']]
+	# data = df.values.tolist()
+	texts = df['text'].tolist()
+	encode_text = []
+	for text in texts:
+		text = bpe.encode(' '.join(rdrsegmenter.tokenize(text)[0]))
+		encode_ = vocab.encode_line('<s> ' + text + ' </s>',append_eos=True, add_if_not_exist=False).long().tolist()
+		encode_text.append(encode_)
+	stars= df['star'].tolist()  
+	encode_text = pad_sequences(encode_text, maxlen=MAX_LEN, dtype="long", value=0, truncating="post", padding="post")
+	X_train,y_train,X_val,y_val,X_test,y_test = split_data(encode_text,stars)
+	return X_train,y_train,X_val,y_val,X_test,y_test
 
 
 if __name__ == '__main__':
