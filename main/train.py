@@ -15,7 +15,7 @@ def flat_accuracy(preds, labels):
     F1_score = f1_score(pred_flat, labels_flat, average='macro')
     
     return accuracy_score(pred_flat, labels_flat), F1_score
-
+'''
 
 config = RobertaConfig.from_pretrained(
     "transformers/PhoBERT_base_transformers/config.json", from_tf=False, num_labels = 6, output_hidden_states=False,
@@ -104,3 +104,4 @@ for epoch_i in range(0, epochs):
     print(" Accuracy: {0:.4f}".format(eval_accuracy/nb_eval_steps))
     print(" F1 score: {0:.4f}".format(eval_f1/nb_eval_steps))
 print("Training complete!")
+'''

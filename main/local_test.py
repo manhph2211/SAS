@@ -16,10 +16,10 @@ BERT_SA = RobertaForSequenceClassification.from_pretrained(
     config=config
 )
 
-BERT_SA.cuda()
-device = 'cuda'
-BERT_SA.load_state_dict(torch.load('./model.pth'))
+device = 'cpu'
+BERT_SA.load_state_dict(torch.load('model.pth',map_location='cpu'))
 BERT_SA.eval()
+
 
 def test(test_loader):
     print("Running Validation...")
@@ -46,38 +46,39 @@ def test(test_loader):
     print(" Accuracy: {0:.4f}".format(eval_accuracy/nb_eval_steps))
     print(" F1 score: {0:.4f}".format(eval_f1/nb_eval_steps))
   
-if __name__=="__main__":
+
+def predict(text):
   #test(test_dataloader)
-  while True:
-    text = input("Nhập:")
-    text = bpe.encode(' '.join(rdrsegmenter.tokenize(text)[0]))
-    encode_ = vocab.encode_line('<s> ' + text + ' </s>',append_eos=True, add_if_not_exist=False).long().tolist()
-    encode_text = pad_sequences([encode_], maxlen=MAX_LEN, dtype="long", value=0, truncating="post", padding="post")
+  # while True:
+  #   text = input("Nhập:")
+  text = bpe.encode(' '.join(rdrsegmenter.tokenize(text)[0]))
+  encode_ = vocab.encode_line('<s> ' + text + ' </s>',append_eos=True, add_if_not_exist=False).long().tolist()
+  encode_text = pad_sequences([encode_], maxlen=MAX_LEN, dtype="long", value=0, truncating="post", padding="post")
 
-    test_masks = get_mask(encode_text)
-    test_masks = torch.tensor(test_masks,dtype = torch.int64)
-    test_inputs = torch.tensor(encode_text)
+  test_masks = get_mask(encode_text)
+  test_masks = torch.tensor(test_masks,dtype = torch.int64)
+  test_inputs = torch.tensor(encode_text)
 
-    test_inputs = test_inputs.to(device)
-    test_masks = test_masks.to(device)
+  test_inputs = test_inputs.to(device)
+  test_masks = test_masks.to(device)
     
-    with torch.no_grad():
-      outputs = BERT_SA(test_inputs, token_type_ids=None, attention_mask=test_masks)
-      logits = outputs[0]
-      logits = logits.detach().cpu().numpy()
-      predict = np.argmax(logits)
-      if predict == 5:
-        te = "Quá tốt"
-      elif predict == 4:
-        te = "Tốt"
-      elif predict == 3:
-        te = "Bình thường"
-      elif predict == 2:
-        te = "Chán"
-      elif predict == 1:
-        te = "Tệ v"
-      print(te)
-
+  with torch.no_grad():
+    outputs = BERT_SA(test_inputs, token_type_ids=None, attention_mask=test_masks)
+    logits = outputs[0]
+    logits = logits.detach().cpu().numpy()
+    predict = np.argmax(logits)
+    
+    if predict == 5:
+      te = "Quá tốt"
+    elif predict == 4:
+      te = "Tốt"
+    elif predict == 3:
+      te = "Bình thường"
+    elif predict == 2:
+      te = "Chán"
+    elif predict == 1:
+      te = "Tệ v"
+    return te
 
 
 
